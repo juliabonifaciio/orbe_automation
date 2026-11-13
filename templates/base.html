@@ -1,0 +1,25 @@
+{% macro orbit(w=64, cls='') %}
+<svg class="orbit {{cls}}" width="{{w}}" height="{{(w*0.83)|int}}" viewBox="0 0 240 200" aria-hidden="true">
+  <g transform="rotate(32 120 100)"><ellipse cx="120" cy="100" rx="108" ry="52" fill="none" stroke="url(#og2)" stroke-width="6"/>
+    <circle r="11" fill="#4FE3C1"><animateMotion dur="11s" repeatCount="indefinite" path="M12,100 a108,52 0 1,0 216,0 a108,52 0 1,0 -216,0"/></circle></g>
+  <g transform="rotate(-32 120 100)"><ellipse cx="120" cy="100" rx="108" ry="52" fill="none" stroke="url(#og)" stroke-width="6"/>
+    <circle r="11" fill="#2DB4F7"><animateMotion dur="8s" repeatCount="indefinite" path="M12,100 a108,52 0 1,0 216,0 a108,52 0 1,0 -216,0"/></circle>
+    <circle r="11" fill="#2DB4F7"><animateMotion dur="8s" begin="-4s" repeatCount="indefinite" path="M12,100 a108,52 0 1,0 216,0 a108,52 0 1,0 -216,0"/></circle></g>
+</svg>
+{% endmacro %}
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}ORBE{% endblock %} · ORBE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Michroma&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+ <linearGradient id="og" x1="0" x2="1"><stop offset="0" stop-color="#4FE3C1"/><stop offset="1" stop-color="#2DB4F7"/></linearGradient>
+ <linearGradient id="og2" x1="0" x2="1"><stop offset="0" stop-color="#2DB4F7"/><stop offset="1" stop-color="#4FE3C1"/></linearGradient></defs></svg>
+<header class="top"><a class="brand" href="/">{{ orbit(46) }}<span>RBE</span></a>
+ <nav><a href="/">Painel</a><a href="/novo" class="cta">Iniciar atendimento</a><a href="/historico">Histórico</a></nav></header>
+<main>{% for cat, m in get_flashed_messages(with_categories=true) %}<div class="flash {{cat}}" role="status">{{ m }}</div>{% endfor %}
+{% block content %}{% endblock %}</main>
+<div id="proc" class="proc" hidden><div>{{ orbit(150,'fast') }}<p id="procmsg">Processando…</p></div></div>
+<footer>ORBE apoia o profissional; não diagnostica, não define gravidade clínica e não substitui a regulação médica.</footer>
+<script src="{{ url_for('static', filename='js/orbe.js') }}"></script></body></html>

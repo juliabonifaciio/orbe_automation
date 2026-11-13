@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block title %}{{o.id}}{% endblock %}
+{% block content %}
+<div class="head"><div><h1>{{o.id}}</h1><p class="muted">{{o.created_at|dt}} · {{o.prof}} · {{o.rodovia or 'Rodovia não informada'}}, km {{o.km or '—'}}, {{o.sentido or 'sentido não informado'}}</p></div>
+<span class="chip big p-{{o.priority or 'NONE'}}">{{ PLABEL[o.priority] if o.priority else 'Sem triagem' }}</span></div>
+<ol class="steps">{% for n in ['Iniciar','Análise','Triagem','Relatório','Aprovação','CCO','Encerrar'] %}<li class="{{'done' if done[loop.index0]}}">{{n}}</li>{% endfor %}</ol>
+<p class="status">Status: <b>{{ STATUS[o.status] }}</b></p>
+
+<section class="card"><h2>1 · Cenário e análise de imagem</h2>
+<form method="post" action="/ocorrencia/{{o.id}}/analisar" enctype="multipart/form-data" class="proc-form" data-msgs='["Validando a imagem…","Executando análise visual…","Aplicando regras de triagem…","Gerando o relatório…"]'>
+<input type="file" name="imagem" accept=".jpg,.jpeg,.png,.webp"><label class="chk"><input type="checkbox" name="reanalisar" value="1"> Refazer análise da imagem atual</label>
+<button class="btn">{{ 'Analisar novamente e gerar relatório' if rep else 'Analisar e gerar relatório' }}</button></form>
+{% if img %}<div class="split"><img class="shot" src="/uploads/{{img.filename}}" alt="Imagem da ocorrência">
+<div><p>{{img.width}}×{{img.height}} px · nitidez {{'%.0f'|format(img.sharpness)}} · brilho {{'%.0f'|format(img.brightness)}}</p>
+{% if ana %}<p><b>Detector:</b> {{ana.detector}} — {{ana.status}} {% if ana.note %}<span class="muted">({{ana.note}})</span>{% endif %}</p>
+{% for d in ana.detections %}<span class="chip">{{d.label}} {{'%.2f'|format(d.conf)}}</span> {% endfor %}
+<p class="muted">Detecções são inferências do modelo, não confirmam acidente nem gravidade.</p>{% endif %}</div></div>{% endif %}</section>
+
+{% if rep %}
+<section class="card"><h2>2 · Triagem operacional <small>(sugestão)</small></h2>
+<ul class="reasons">{% for r in reasons %}<li>{{r}}</li>{% else %}<li>Nenhum critério de risco atendido com as informações disponíveis.</li>{% endfor %}</ul></section>
+
+<section class="card"><h2>3 · Relatório v{{rep.version}} <span class="chip mode-{{rep.mode}}">{{c.modo_label}}</span></h2>
+{% if rep.mode_note %}<div class="flash aviso">{{rep.mode_note}} <b>Nenhum dado foi perdido.</b></div>{% endif %}
+{% if blocked %}<div class="flash erro">Localização incompleta: complemente em “Editar” antes de aprovar.</div>{% endif %}
+<dl>{% for t,v in c.secoes %}<dt>{{t}}</dt><dd>{{v}}</dd>{% endfor %}</dl>
+<p class="muted">Versões: {% for v in versions %}v{{v.version}} ({{v.status}}){{ ', ' if not loop.last }}{% endfor %}</p>
+<a class="btn ghost" href="/ocorrencia/{{o.id}}/pdf">Baixar PDF</a></section>
+
+{% if o.status in ['aguardando_aprovacao','rejeitado'] %}
+<section class="card gate"><h2>4 · Revisão e aprovação humana</h2><p>O relatório só segue ao CCO depois da sua decisão. Esta aprovação é independente de qualquer acionamento.</p>
+<form method="post" action="/ocorrencia/{{o.id}}/decisao" class="form"><label>Responsável pela decisão*<input name="approver" required value="{{o.prof}}"></label>
+<label class="w2">Justificativa <small>(obrigatória para rejeitar ou se a prioridade for “Necessita de verificação”)</small><textarea name="justificativa" rows="2"></textarea></label>
+<div class="w2 actions"><button class="btn" name="decisao" value="aprovar">Aprovar relatório</button><button class="btn danger" name="decisao" value="rejeitar">Rejeitar relatório</button></div></form></section>
+{% endif %}
+
+{% if o.status not in ['encaminhado','encerrada'] %}
+<section class="card"><h2>Editar informações</h2><form method="post" action="/ocorrencia/{{o.id}}/editar" class="form">
+<label>Responsável pela edição<input name="author" value="{{o.prof}}"></label><label>Rodovia<input name="rodovia" value="{{o.rodovia or ''}}"></label>
+<label>Quilômetro<input name="km" value="{{o.km or ''}}"></label><label>Sentido<input name="sentido" value="{{o.sentido or ''}}"></label>
+<label>Veículos<input type="number" name="n_veiculos" value="{{o.n_veiculos if o.n_veiculos is not none else ''}}"></label><label>Vítimas (informado)<input type="number" name="n_vitimas" value="{{o.n_vitimas if o.n_vitimas is not none else ''}}"></label>
+<label class="w2">Descrição<textarea name="descricao" rows="2">{{o.descricao or ''}}</textarea></label>
+<label class="w2">Resumo operacional<textarea name="resumo" rows="4">{{c.resumo}}</textarea></label><label class="w2">Encaminhamento sugerido<textarea name="encaminhamento" rows="3">{{c.encaminhamento}}</textarea></label>
+<button class="btn ghost w2">Salvar como nova versão (exige nova aprovação)</button></form></section>
+{% endif %}
+
+{% if o.status in ['aprovado','encaminhamento_falhou','encaminhado','encerrada'] %}
+<section class="card"><h2>5 · Encaminhamento ao CCO <span class="chip sim">SIMULAÇÃO — sem integração real</span></h2>
+{% if o.status in ['aprovado','encaminhamento_falhou'] %}<form method="post" action="/ocorrencia/{{o.id}}/encaminhar" class="actions"><button class="btn">{{ 'Tentar novamente' if o.status=='encaminhamento_falhou' else 'Encaminhar ao CCO (simulado)' }}</button>
+<label class="chk"><input type="checkbox" name="falha_demo" value="1"> Demonstrar falha de envio</label></form>{% endif %}
+{% for d in disps %}<p class="row2"><b>{{d.status}}</b> · {{d.created_at|dt}} · <span class="muted">{{d.detail}}</span></p>{% endfor %}
+{% if o.status=='encaminhado' %}<form method="post" action="/ocorrencia/{{o.id}}/encerrar"><button class="btn">Encerrar atendimento e gerar PDF</button></form>{% endif %}</section>
+{% endif %}
+
+<section class="card"><h2>Rastreabilidade</h2>
+{% for a in aprs %}<p class="row2"><b>{{a.decision}}</b> por {{a.approver}} · {{a.created_at|dt}} · {{a.justification or 'sem justificativa'}}</p>{% endfor %}
+{% for x in chg %}<p class="row2">{{x.created_at|dt}} · {{x.author}} alterou <b>{{x.field}}</b></p>{% endfor %}
+{% if not aprs and not chg %}<p class="muted">Sem decisões ou alterações registradas.</p>{% endif %}</section>
+{% endif %}{% endblock %}

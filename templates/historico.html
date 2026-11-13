@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block title %}Histórico{% endblock %}
+{% block content %}<h1>Histórico de ocorrências</h1>
+<form class="filters card" method="get"><input name="q" value="{{q}}" placeholder="ID, rodovia ou profissional">
+<select name="prioridade"><option value="">Toda prioridade</option>{% for k,v in PLABEL.items() %}<option value="{{k}}" {{'selected' if p==k}}>{{v}}</option>{% endfor %}</select>
+<select name="status"><option value="">Todo status</option>{% for k,v in STATUS.items() %}<option value="{{k}}" {{'selected' if s==k}}>{{v}}</option>{% endfor %}</select><button class="btn">Filtrar</button></form>
+<div class="card scroll"><table><tr><th>ID</th><th>Data</th><th>Local</th><th>Profissional</th><th>Prioridade</th><th>Status</th><th>Encaminhamentos</th><th></th></tr>
+{% for r in rows %}<tr><td><a href="/ocorrencia/{{r.id}}">{{r.id}}</a></td><td>{{r.created_at|dt}}</td><td>{{r.rodovia or '—'}} km {{r.km or '—'}}</td><td>{{r.prof}}</td>
+<td><span class="chip p-{{r.priority or 'NONE'}}">{{ PLABEL[r.priority] if r.priority else '—' }}</span></td><td>{{STATUS[r.status]}}</td>
+<td>{% for d in r.disp %}{{d.status}} ({{d.created_at|dt}})<br>{% else %}—{% endfor %}</td><td><a href="/ocorrencia/{{r.id}}/pdf">PDF</a></td></tr>
+{% else %}<tr><td colspan="8" class="muted">Nenhuma ocorrência encontrada. Ajuste os filtros ou inicie um atendimento.</td></tr>{% endfor %}</table></div>{% endblock %}

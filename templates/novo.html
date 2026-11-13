@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}Novo atendimento{% endblock %}
+{% block content %}<h1>Novo atendimento</h1><p class="muted">Preencha o que souber. Campos vazios aparecem como “Não informado” — nada é inventado.</p>
+<form method="post" class="card form"><label class="w2">Profissional responsável*<input name="profissional" required value="{{f.profissional}}"></label>
+<label>Rodovia<input name="rodovia" value="{{f.rodovia}}" placeholder="ex.: BR-116"></label><label>Quilômetro<input name="km" value="{{f.km}}"></label>
+<label>Sentido<select name="sentido">{% for s in ['','Norte','Sul','Leste','Oeste','Crescente','Decrescente'] %}<option {{'selected' if f.sentido==s}}>{{s}}</option>{% endfor %}</select></label>
+<label>Tipo de ocorrência<select name="tipo">{% for s in ['','Colisão','Capotamento','Atropelamento','Incêndio em veículo','Outro'] %}<option {{'selected' if f.tipo==s}}>{{s}}</option>{% endfor %}</select></label>
+<label>Veículos envolvidos<input type="number" min="0" name="n_veiculos" value="{{f.n_veiculos}}"></label><label>Vítimas (informado por você)<input type="number" min="0" name="n_vitimas" value="{{f.n_vitimas}}"></label>
+<label>Pessoas presas?<select name="presos"><option value="nao_informado">Não informado</option><option value="sim">Sim</option><option value="nao">Não</option></select></label>
+<label>Apoio solicitado<input name="apoio" value="{{f.apoio}}" placeholder="ex.: Bombeiros, guincho"></label>
+<label class="w2">Descrição inicial<textarea name="descricao" rows="3">{{f.descricao}}</textarea></label>
+<button class="btn big w2">Criar ocorrência</button></form>{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% from "base.html" import orbit %}{% block title %}Painel{% endblock %}
+{% block content %}
+<section class="hero"><div class="mark">{{ orbit(300) }}<h1>RBE</h1></div>
+ <p class="slogan">A Inteligência que conecta a ocorrência.</p>
+ <p class="lead">Registre o cenário, receba uma triagem explicável, revise o relatório e só então encaminhe ao CCO.</p>
+ <a class="btn big" href="/novo">Iniciar atendimento</a></section>
+<section class="kpis">
+{% for label,val,tone in [('Ocorrências registradas',s.total,''),('Em andamento',s.andamento,''),('Aguardando revisão',s.revisao,'amber'),('Relatórios aguardando aprovação',s.rel_pend,'amber'),('Relatórios aprovados',s.rel_apr,'mint'),('Encaminhamentos pendentes',s.env_pend,'amber'),('Encaminhamentos concluídos (simulados)',s.env_ok,'mint')] %}
+ <div class="kpi {{tone}}"><b data-count="{{val}}">{{val}}</b><span>{{label}}</span></div>{% endfor %}
+ <div class="kpi"><b>{{ s.tempo if s.tempo is not none else '—' }}</b><span>Minutos médios do início à aprovação</span></div>
+</section>
+<section class="grid2"><div class="card"><h2>Distribuição por prioridade</h2>
+ {% for k in ['ALTA','MEDIA','VERIFICACAO','SEM_INDICACAO'] %}{% set n = s.prio.get(k,0) %}
+ <div class="bar"><span>{{ PLABEL[k] }}</span><i class="p-{{k}}" style="--w:{{ (n*100/s.total)|int if s.total else 0 }}%"></i><em>{{ n }}</em></div>{% endfor %}
+ {% if not s.total %}<p class="muted">Sem ocorrências ainda. Os indicadores são calculados a partir do banco de dados.</p>{% endif %}</div>
+<div class="card"><h2>Histórico recente</h2>
+ {% for r in recent %}<a class="row" href="/ocorrencia/{{r.id}}"><b>{{r.id}}</b><span>{{r.rodovia or 'Rodovia não informada'}} · {{r.prof}}</span><span class="chip p-{{r.priority or 'NONE'}}">{{ PLABEL[r.priority] if r.priority else 'Sem triagem' }}</span></a>
+ {% else %}<p class="muted">Nenhum atendimento registrado.</p>{% endfor %}</div></section>
+{% endblock %}
